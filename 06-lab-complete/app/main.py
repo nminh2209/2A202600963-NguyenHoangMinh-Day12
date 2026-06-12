@@ -26,9 +26,9 @@ from app.auth import verify_api_key
 from app.config import settings
 from app.cost_guard import check_budget, get_usage, record_usage
 from app.rate_limiter import check_rate_limit
-from app.redis_client import init_redis, redis_available
+from app.redis_client import ensure_redis, init_redis, redis_available
 from app.session import append_message, get_history
-from app.llm import ask as llm_ask
+from app.llm import ask as llm_ask, get_llm_provider
 
 logging.basicConfig(
     level=getattr(logging, settings.log_level.upper(), logging.INFO),
@@ -147,7 +147,8 @@ def api_info():
         "version": settings.app_version,
         "environment": settings.environment,
         "instance_id": INSTANCE_ID,
-        "llm": "openai" if settings.openai_api_key else "mock",
+        "llm": get_llm_provider(),
+        "openai_configured": settings.openai_configured,
         "ui": "/",
         "endpoints": {
             "ask": "POST /ask (requires X-API-Key)",
@@ -169,6 +170,7 @@ async def ask_agent(
     request: Request,
     _key: str = Depends(verify_api_key),
 ):
+    ensure_redis()
     check_rate_limit(body.user_id)
     check_budget(body.user_id)
 
@@ -182,7 +184,7 @@ async def ask_agent(
     }))
 
     try:
-        answer, input_tokens, output_tokens = llm_ask(body.question, history=history)
+        answer, input_tokens, output_tokens, model_label = llm_ask(body.question, history=history)
     except Exception as exc:
         logger.exception("LLM call failed")
         raise HTTPException(status_code=502, detail=f"LLM provider error: {exc}") from exc
@@ -198,7 +200,7 @@ async def ask_agent(
         user_id=body.user_id,
         question=body.question,
         answer=answer,
-        model=settings.llm_model if settings.openai_api_key else "mock-llm",
+        model=model_label,
         turn=user_turns,
         served_by=INSTANCE_ID,
         storage="redis" if redis_available() else "in-memory",
@@ -231,7 +233,8 @@ def health():
         "uptime_seconds": round(time.time() - START_TIME, 1),
         "total_requests": _request_count,
         "checks": {
-            "llm": "openai" if settings.openai_api_key else "mock",
+            "llm": get_llm_provider(),
+            "openai_configured": settings.openai_configured,
             "redis": redis_ok if settings.redis_url else "not_configured",
         },
         "timestamp": datetime.now(timezone.utc).isoformat(),

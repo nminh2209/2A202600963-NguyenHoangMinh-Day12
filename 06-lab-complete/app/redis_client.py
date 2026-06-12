@@ -11,8 +11,8 @@ logger = logging.getLogger(__name__)
 _client: redis.Redis | None = None
 _use_redis = False
 
-_STARTUP_RETRIES = 5
-_RETRY_DELAY_SEC = 2
+_STARTUP_RETRIES = 8
+_RETRY_DELAY_SEC = 3
 
 
 def init_redis() -> bool:
@@ -22,7 +22,6 @@ def init_redis() -> bool:
         _use_redis = False
         return False
 
-    # Mask credentials in logs
     safe_url = settings.redis_url.split("@")[-1] if "@" in settings.redis_url else settings.redis_url
     logger.info("Connecting to Redis at %s", safe_url)
 
@@ -31,7 +30,10 @@ def init_redis() -> bool:
             _client = redis.from_url(
                 settings.redis_url,
                 decode_responses=True,
-                socket_connect_timeout=5,
+                socket_connect_timeout=8,
+                socket_timeout=8,
+                retry_on_timeout=True,
+                health_check_interval=30,
             )
             _client.ping()
             _use_redis = True
@@ -50,14 +52,23 @@ def init_redis() -> bool:
                 time.sleep(_RETRY_DELAY_SEC)
 
     logger.error(
-        "Redis unavailable after %s attempts — using in-memory fallback. "
-        "On Render, web + Redis must be in the same region (e.g. singapore).",
-        _STARTUP_RETRIES,
+        "Redis unavailable — using in-memory fallback. "
+        "On Render: delete Redis, recreate in Singapore, relink REDIS_URL on day12-agent."
     )
     return False
 
 
+def ensure_redis() -> bool:
+    """Retry Redis connection if URL is configured but not connected."""
+    if redis_available():
+        return True
+    if settings.redis_url:
+        return init_redis()
+    return False
+
+
 def get_redis() -> redis.Redis | None:
+    ensure_redis()
     return _client if _use_redis else None
 
 
@@ -68,4 +79,6 @@ def redis_available() -> bool:
         _client.ping()
         return True
     except Exception:
+        global _use_redis
+        _use_redis = False
         return False

@@ -72,7 +72,8 @@ async function refreshStatus() {
       "Redis: n/a";
     setPill(els.pillRedis, redisLabel, redis === true ? "ok" : redis === false ? "warn" : "");
     const llm = data.checks?.llm || "mock";
-    setPill(els.pillModel, `LLM: ${llm}`, llm === "openai" ? "ok" : "");
+    const llmOk = llm === "openai" || llm === "mock";
+    setPill(els.pillModel, `LLM: ${llm}`, llmOk ? "ok" : "warn");
   } catch {
     setPill(els.pillHealth, "Health: unreachable", "err");
   }

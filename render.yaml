@@ -26,6 +26,10 @@ services:
         generateValue: true
       - key: OPENAI_API_KEY
         sync: false
+      - key: USE_MOCK_LLM
+        value: "true"
+      - key: LLM_FALLBACK_MOCK
+        value: "true"
       - key: REDIS_URL
         fromService:
           name: day12-redis

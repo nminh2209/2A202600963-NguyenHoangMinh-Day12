@@ -76,6 +76,14 @@ curl -X POST "$URL/ask" `
 | Build fails | Confirm **Root Directory** = `06-lab-complete` |
 | `/ready` 503 | Check Redis is running and `REDIS_URL` is set |
 | Redis DNS error | **Web + Redis must be same region** (both `singapore` in `render.yaml`) |
+| OpenAI 502 / Connection error | Set `USE_MOCK_LLM=true` on **day12-agent**, or fix `OPENAI_API_KEY` (must start with `sk-`) |
+
+### Fix Redis on Render (manual)
+
+1. Dashboard → **day12-redis** → confirm **Region = Singapore**
+2. If wrong region: **delete** `day12-redis` → **New +** → **Redis** → **Singapore**
+3. **day12-agent** → **Environment** → edit `REDIS_URL` → link **Internal** URL from new Redis
+4. **Manual Deploy** on day12-agent
 | 401 on `/ask` | Use `AGENT_API_KEY` from Render env in `X-API-Key` header |
 | Slow first request | Normal on free tier (cold start) |
 
