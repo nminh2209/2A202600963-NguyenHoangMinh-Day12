@@ -76,7 +76,8 @@ curl -X POST "$URL/ask" `
 | Build fails | Confirm **Root Directory** = `06-lab-complete` |
 | `/ready` 503 | Check Redis is running and `REDIS_URL` is set |
 | Redis DNS error | **Web + Redis must be same region** (both `singapore` in `render.yaml`) |
-| OpenAI 502 / Connection error | Set `USE_MOCK_LLM=true` on **day12-agent**, or fix `OPENAI_API_KEY` (must start with `sk-`) |
+| Still mock LLM | Set `USE_MOCK_LLM=false` and a valid `OPENAI_API_KEY` (`sk-...`) on **day12-agent**, redeploy |
+| OpenAI 502 / Connection error | Keep `LLM_FALLBACK_MOCK=true` so chat still works if OpenAI is unreachable |
 
 ### Move Redis to Singapore (cannot change region in place)
 

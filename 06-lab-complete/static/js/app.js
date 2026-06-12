@@ -77,7 +77,7 @@ async function refreshStatus() {
     const useMock = data.checks?.use_mock_llm;
     const openaiOk = data.checks?.openai_configured;
     let llmLabel = data.checks?.llm || "mock";
-    if (useMock) llmLabel = "mock (USE_MOCK_LLM=true)";
+    if (useMock) llmLabel = "mock — set USE_MOCK_LLM=false on Render";
     else if (openaiOk) llmLabel = "openai ready";
     else llmLabel = "mock (no valid OPENAI_API_KEY)";
     setPill(els.pillModel, `LLM: ${llmLabel}`, useMock || !openaiOk ? "warn" : "ok");
