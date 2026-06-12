@@ -5,6 +5,7 @@ const els = {
   apiKey: document.getElementById("apiKey"),
   userId: document.getElementById("userId"),
   saveConfig: document.getElementById("saveConfig"),
+  testKey: document.getElementById("testKey"),
   messages: document.getElementById("messages"),
   welcome: document.getElementById("welcome"),
   typing: document.getElementById("typing"),
@@ -142,6 +143,15 @@ async function sendMessage(question) {
       const detail = typeof data.detail === "object"
         ? JSON.stringify(data.detail)
         : (data.detail || res.statusText);
+      if (res.status === 401) {
+        throw new Error("401: Invalid API key — copy AGENT_API_KEY from Render Environment (not OPENAI_API_KEY)");
+      }
+      if (res.status === 502) {
+        throw new Error("502: Server/LLM error — set USE_MOCK_LLM=true on Render, or fix OPENAI_API_KEY");
+      }
+      if (res.status === 429) {
+        throw new Error("429: Rate limit exceeded — wait 1 minute");
+      }
       throw new Error(`${res.status}: ${detail}`);
     }
 
@@ -156,7 +166,29 @@ async function sendMessage(question) {
   }
 }
 
+async function testApiKey() {
+  const { apiKey } = getConfig();
+  if (!apiKey) {
+    showToast("Enter API key first");
+    return;
+  }
+  try {
+    const res = await fetch(`${API_BASE}/auth/verify`, {
+      headers: { "X-API-Key": apiKey },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok) {
+      showToast("API key is valid", false);
+    } else {
+      showToast(data.detail || `Key rejected (${res.status})`);
+    }
+  } catch (err) {
+    showToast(err.message);
+  }
+}
+
 els.saveConfig.addEventListener("click", saveConfig);
+els.testKey.addEventListener("click", testApiKey);
 els.send.addEventListener("click", () => sendMessage());
 els.input.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey) {

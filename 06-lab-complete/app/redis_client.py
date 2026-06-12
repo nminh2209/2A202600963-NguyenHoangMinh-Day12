@@ -10,13 +10,19 @@ logger = logging.getLogger(__name__)
 
 _client: redis.Redis | None = None
 _use_redis = False
+_init_attempted = False
+_last_reconnect_at = 0.0
 
-_STARTUP_RETRIES = 8
-_RETRY_DELAY_SEC = 3
+_STARTUP_RETRIES = 3
+_RETRY_DELAY_SEC = 2
+_RECONNECT_COOLDOWN_SEC = 120
 
 
 def init_redis() -> bool:
-    global _client, _use_redis
+    global _client, _use_redis, _init_attempted, _last_reconnect_at
+    _init_attempted = True
+    _last_reconnect_at = time.time()
+
     if not settings.redis_url:
         logger.warning("REDIS_URL not set — using in-memory fallback (not scalable)")
         _use_redis = False
@@ -30,10 +36,8 @@ def init_redis() -> bool:
             _client = redis.from_url(
                 settings.redis_url,
                 decode_responses=True,
-                socket_connect_timeout=8,
-                socket_timeout=8,
-                retry_on_timeout=True,
-                health_check_interval=30,
+                socket_connect_timeout=3,
+                socket_timeout=3,
             )
             _client.ping()
             _use_redis = True
@@ -53,22 +57,24 @@ def init_redis() -> bool:
 
     logger.error(
         "Redis unavailable — using in-memory fallback. "
-        "On Render: delete Redis, recreate in Singapore, relink REDIS_URL on day12-agent."
+        "Update REDIS_URL on Render to a live Internal URL (Singapore region)."
     )
     return False
 
 
 def ensure_redis() -> bool:
-    """Retry Redis connection if URL is configured but not connected."""
+    """Lightweight check — no long retry loop on hot request path."""
     if redis_available():
         return True
-    if settings.redis_url:
-        return init_redis()
-    return False
+    if not settings.redis_url or not _init_attempted:
+        return False
+    now = time.time()
+    if now - _last_reconnect_at < _RECONNECT_COOLDOWN_SEC:
+        return False
+    return init_redis()
 
 
 def get_redis() -> redis.Redis | None:
-    ensure_redis()
     return _client if _use_redis else None
 
 

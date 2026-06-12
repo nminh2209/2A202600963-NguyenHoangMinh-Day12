@@ -26,7 +26,7 @@ from app.auth import verify_api_key
 from app.config import settings
 from app.cost_guard import check_budget, get_usage, record_usage
 from app.rate_limiter import check_rate_limit
-from app.redis_client import ensure_redis, init_redis, redis_available
+from app.redis_client import init_redis, redis_available
 from app.session import append_message, get_history
 from app.llm import ask as llm_ask, get_llm_provider
 
@@ -176,7 +176,6 @@ async def ask_agent(
     request: Request,
     _key: str = Depends(verify_api_key),
 ):
-    ensure_redis()
     check_rate_limit(body.user_id)
     check_budget(body.user_id)
 
@@ -212,6 +211,12 @@ async def ask_agent(
         storage="redis" if redis_available() else "in-memory",
         timestamp=datetime.now(timezone.utc).isoformat(),
     )
+
+
+@app.get("/auth/verify", tags=["Agent"])
+def verify_key(_key: str = Depends(verify_api_key)):
+    """Quick check that X-API-Key is valid (use from demo UI)."""
+    return {"ok": True, "message": "API key is valid"}
 
 
 @app.get("/usage/{user_id}", tags=["Agent"])

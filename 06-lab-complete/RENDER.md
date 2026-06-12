@@ -78,12 +78,20 @@ curl -X POST "$URL/ask" `
 | Redis DNS error | **Web + Redis must be same region** (both `singapore` in `render.yaml`) |
 | OpenAI 502 / Connection error | Set `USE_MOCK_LLM=true` on **day12-agent**, or fix `OPENAI_API_KEY` (must start with `sk-`) |
 
-### Fix Redis on Render (manual)
+### Move Redis to Singapore (cannot change region in place)
 
-1. Dashboard → **day12-redis** → confirm **Region = Singapore**
-2. If wrong region: **delete** `day12-redis` → **New +** → **Redis** → **Singapore**
-3. **day12-agent** → **Environment** → edit `REDIS_URL` → link **Internal** URL from new Redis
-4. **Manual Deploy** on day12-agent
+Render does **not** let you move Redis Oregon → Singapore. Recreate it:
+
+1. Confirm **day12-agent** → **Settings** → **Region = Singapore** (move web service if needed)
+2. **Delete** the Oregon **day12-redis** instance
+3. **New +** → **Redis** → name `day12-redis` → **Region: Singapore (Southeast Asia)**
+4. **day12-agent** → **Environment** → delete old `REDIS_URL`
+5. Add `REDIS_URL` = **Internal** URL from the new Singapore Redis (Connect → Internal)
+6. **Manual Deploy** on day12-agent
+
+Or: **Blueprint** → **Sync** after pushing `render.yaml` (both services already specify `region: singapore`).
+
+Internal Redis only works when **web + Redis are in the same region**.
 | 401 on `/ask` | Use `AGENT_API_KEY` from Render env in `X-API-Key` header |
 | Slow first request | Normal on free tier (cold start) |
 
