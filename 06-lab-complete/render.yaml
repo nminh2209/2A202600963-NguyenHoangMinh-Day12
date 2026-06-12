@@ -32,6 +32,7 @@ services:
 
   - type: redis
     name: day12-redis
+    region: singapore
     plan: free
     maxmemoryPolicy: allkeys-lru
     ipAllowList: []

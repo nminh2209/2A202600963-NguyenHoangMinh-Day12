@@ -26,6 +26,7 @@ COPY --from=builder /opt/venv /opt/venv
 
 COPY app/ ./app/
 COPY utils/ ./utils/
+COPY static/ ./static/
 
 RUN chown -R agent:agent /app /opt/venv
 

@@ -1,5 +1,6 @@
 """Shared Redis connection for stateless storage."""
 import logging
+import time
 
 import redis
 
@@ -10,6 +11,9 @@ logger = logging.getLogger(__name__)
 _client: redis.Redis | None = None
 _use_redis = False
 
+_STARTUP_RETRIES = 5
+_RETRY_DELAY_SEC = 2
+
 
 def init_redis() -> bool:
     global _client, _use_redis
@@ -17,17 +21,40 @@ def init_redis() -> bool:
         logger.warning("REDIS_URL not set — using in-memory fallback (not scalable)")
         _use_redis = False
         return False
-    try:
-        _client = redis.from_url(settings.redis_url, decode_responses=True)
-        _client.ping()
-        _use_redis = True
-        logger.info("Connected to Redis")
-        return True
-    except Exception as exc:
-        logger.error("Redis connection failed: %s", exc)
-        _use_redis = False
-        _client = None
-        return False
+
+    # Mask credentials in logs
+    safe_url = settings.redis_url.split("@")[-1] if "@" in settings.redis_url else settings.redis_url
+    logger.info("Connecting to Redis at %s", safe_url)
+
+    for attempt in range(1, _STARTUP_RETRIES + 1):
+        try:
+            _client = redis.from_url(
+                settings.redis_url,
+                decode_responses=True,
+                socket_connect_timeout=5,
+            )
+            _client.ping()
+            _use_redis = True
+            logger.info("Connected to Redis")
+            return True
+        except Exception as exc:
+            logger.warning(
+                "Redis connection attempt %s/%s failed: %s",
+                attempt,
+                _STARTUP_RETRIES,
+                exc,
+            )
+            _client = None
+            _use_redis = False
+            if attempt < _STARTUP_RETRIES:
+                time.sleep(_RETRY_DELAY_SEC)
+
+    logger.error(
+        "Redis unavailable after %s attempts — using in-memory fallback. "
+        "On Render, web + Redis must be in the same region (e.g. singapore).",
+        _STARTUP_RETRIES,
+    )
+    return False
 
 
 def get_redis() -> redis.Redis | None:

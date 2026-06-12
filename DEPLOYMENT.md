@@ -5,10 +5,10 @@
 ## Public URL
 
 ```
-https://YOUR-SERVICE.onrender.com
+https://day12-agent-arzd.onrender.com
 ```
 
-Replace after deploy (Render → **day12-agent** → URL at top).
+**Demo UI:** https://day12-agent-arzd.onrender.com/ (paste `AGENT_API_KEY` in settings)
 
 ## Setup summary
 

@@ -13,10 +13,13 @@ import time
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from pathlib import Path
 
 import uvicorn
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from app.auth import verify_api_key
@@ -35,6 +38,7 @@ logger = logging.getLogger(__name__)
 
 START_TIME = time.time()
 INSTANCE_ID = os.getenv("INSTANCE_ID", f"instance-{uuid.uuid4().hex[:6]}")
+STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 _is_ready = False
 _in_flight_requests = 0
 _request_count = 0
@@ -128,21 +132,35 @@ class AskResponse(BaseModel):
     timestamp: str
 
 
-@app.get("/", tags=["Info"])
-def root():
+@app.get("/", include_in_schema=False)
+def ui():
+    index = STATIC_DIR / "index.html"
+    if index.exists():
+        return FileResponse(index)
+    return {"message": "UI not found. Use /api for service info."}
+
+
+@app.get("/api", tags=["Info"])
+def api_info():
     return {
         "app": settings.app_name,
         "version": settings.app_version,
         "environment": settings.environment,
         "instance_id": INSTANCE_ID,
         "llm": "openai" if settings.openai_api_key else "mock",
+        "ui": "/",
         "endpoints": {
             "ask": "POST /ask (requires X-API-Key)",
             "health": "GET /health",
             "ready": "GET /ready",
             "usage": "GET /usage/{user_id}",
+            "history": "GET /history/{user_id}",
         },
     }
+
+
+if STATIC_DIR.is_dir():
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 
 @app.post("/ask", response_model=AskResponse, tags=["Agent"])

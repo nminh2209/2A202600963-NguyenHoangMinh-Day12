@@ -19,7 +19,6 @@ day12_ha-tang-cloud_va_deployment/
 │   └── production/                   #   Multi-stage + Docker Compose stack
 │
 ├── 03-cloud-deployment/            # Section 3: Cloud Options
-│   ├── railway/                    #   Deploy Railway (< 5 phút)
 │   ├── render/                     #   Deploy Render + render.yaml
 │   └── production-cloud-run/         #   GCP Cloud Run + CI/CD
 │
@@ -76,7 +75,7 @@ Mỗi folder có `requirements.txt` riêng. Không cần API key thật — các
 |---|--------|--------------|
 | 1 | `01-localhost-vs-production` | Dev/prod gap, 12-factor, secrets |
 | 2 | `02-docker` | Dockerfile, multi-stage, docker-compose |
-| 3 | `03-cloud-deployment` | Railway, Render, Cloud Run |
+| 3 | `03-cloud-deployment` | Render, Cloud Run |
 | 4 | `04-api-gateway` | Auth, rate limiting, cost protection |
 | 5 | `05-scaling-reliability` | Health check, stateless, rolling deploy |
 | 6 | `06-lab-complete` | **Full production agent** |

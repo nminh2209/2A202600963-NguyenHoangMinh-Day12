@@ -44,8 +44,8 @@ Create a file `MISSION_ANSWERS.md` with your answers to all exercises:
 
 ## Part 3: Cloud Deployment
 
-### Exercise 3.1: Railway deployment
-- URL: https://your-app.railway.app
+### Exercise 3.1: Render deployment
+- URL: https://your-app.onrender.com
 - Screenshot: [Link to screenshot in repo]
 
 ## Part 4: API Security
@@ -83,7 +83,7 @@ your-repo/
 ├── requirements.txt         # Dependencies
 ├── .env.example             # Environment template
 ├── .dockerignore            # Docker ignore
-├── railway.toml             # Railway config (or render.yaml)
+├── render.yaml              # Render Blueprint (repo root + 06-lab-complete)
 └── README.md                # Setup instructions
 ```
 
@@ -108,22 +108,22 @@ Create a file `DEPLOYMENT.md` with your deployed service information:
 # Deployment Information
 
 ## Public URL
-https://your-agent.railway.app
+https://your-agent.onrender.com
 
 ## Platform
-Railway / Render / Cloud Run
+Render
 
 ## Test Commands
 
 ### Health Check
 ```bash
-curl https://your-agent.railway.app/health
+curl https://your-agent.onrender.com/health
 # Expected: {"status": "ok"}
 ```
 
 ### API Test (with authentication)
 ```bash
-curl -X POST https://your-agent.railway.app/ask \
+curl -X POST https://your-agent.onrender.com/ask \
   -H "X-API-Key: YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{"user_id": "test", "question": "Hello"}'
@@ -162,20 +162,20 @@ Before submitting, verify your deployment:
 
 ```bash
 # 1. Health check
-curl https://your-app.railway.app/health
+curl https://your-app.onrender.com/health
 
 # 2. Authentication required
-curl https://your-app.railway.app/ask
+curl https://your-app.onrender.com/ask
 # Should return 401
 
 # 3. With API key works
-curl -H "X-API-Key: YOUR_KEY" https://your-app.railway.app/ask \
+curl -H "X-API-Key: YOUR_KEY" https://your-app.onrender.com/ask \
   -X POST -d '{"user_id":"test","question":"Hello"}'
 # Should return 200
 
 # 4. Rate limiting
 for i in {1..15}; do 
-  curl -H "X-API-Key: YOUR_KEY" https://your-app.railway.app/ask \
+  curl -H "X-API-Key: YOUR_KEY" https://your-app.onrender.com/ask \
     -X POST -d '{"user_id":"test","question":"test"}'; 
 done
 # Should eventually return 429

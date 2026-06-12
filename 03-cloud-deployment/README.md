@@ -10,26 +10,6 @@
 
 ---
 
-## railway/ — Deploy < 5 Phút
-
-Không cần server config. Kết nối GitHub → Auto deploy.
-
-```
-railway/
-├── railway.toml        # Railway config
-├── Procfile            # Define start command
-├── app.py              # Agent (Railway-ready)
-└── requirements.txt
-```
-
-### Các bước deploy Railway:
-1. `railway login` (hoặc qua browser)
-2. `railway init`
-3. `railway up`
-4. Nhận URL dạng `https://your-app.up.railway.app`
-
----
-
 ## render/ — render.yaml (Infrastructure as Code)
 
 Định nghĩa toàn bộ infrastructure trong 1 YAML file.
@@ -59,4 +39,4 @@ production-cloud-run/
 
 1. Tại sao serverless (Lambda) không phải lúc nào cũng tốt cho AI agent?
 2. "Cold start" là gì? Ảnh hưởng thế nào đến UX?
-3. Khi nào nên upgrade từ Railway lên Cloud Run?
+3. Khi nào nên upgrade từ Render lên Cloud Run?

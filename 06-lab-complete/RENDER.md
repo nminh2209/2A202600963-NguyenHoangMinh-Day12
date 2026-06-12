@@ -1,6 +1,6 @@
 # Deploy to Render — Day 12 Agent
 
-No Railway account limits. Uses **free** web + Redis tier.
+Uses **free** web + Redis tier on Render.
 
 ## Prerequisites
 
@@ -75,6 +75,7 @@ curl -X POST "$URL/ask" `
 |-------|-----|
 | Build fails | Confirm **Root Directory** = `06-lab-complete` |
 | `/ready` 503 | Check Redis is running and `REDIS_URL` is set |
+| Redis DNS error | **Web + Redis must be same region** (both `singapore` in `render.yaml`) |
 | 401 on `/ask` | Use `AGENT_API_KEY` from Render env in `X-API-Key` header |
 | Slow first request | Normal on free tier (cold start) |
 
