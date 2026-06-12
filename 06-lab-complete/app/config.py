@@ -44,7 +44,8 @@ class Settings:
     @property
     def openai_configured(self) -> bool:
         key = self.openai_api_key
-        return bool(key) and key.startswith("sk-") and len(key) > 20
+        # OpenAI keys usually start with sk-; project keys may use sk-proj-
+        return bool(key) and key.startswith("sk") and len(key) > 20
 
     def validate(self):
         logger = logging.getLogger(__name__)
@@ -52,7 +53,9 @@ class Settings:
             if self.agent_api_key == "dev-key-change-me":
                 raise ValueError("AGENT_API_KEY must be set in production!")
         if self.use_mock_llm:
-            logger.info("USE_MOCK_LLM=true — mock LLM enabled")
+            logger.info(
+                "USE_MOCK_LLM=true — mock LLM enabled (set to false on Render to use OpenAI)"
+            )
         elif not self.openai_configured:
             if self.openai_api_key:
                 logger.warning("OPENAI_API_KEY is set but looks invalid — using mock LLM")

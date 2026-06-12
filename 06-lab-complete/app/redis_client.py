@@ -73,12 +73,12 @@ def get_redis() -> redis.Redis | None:
 
 
 def redis_available() -> bool:
+    global _use_redis
     if not _use_redis or _client is None:
         return False
     try:
         _client.ping()
         return True
     except Exception:
-        global _use_redis
         _use_redis = False
         return False
