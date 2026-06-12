@@ -66,14 +66,20 @@ async function refreshStatus() {
     const data = await res.json();
     setPill(els.pillHealth, `Health: ${data.status}`, data.status === "ok" ? "ok" : "warn");
     const redis = data.checks?.redis;
+    const redisSet = data.checks?.redis_url_set;
     const redisLabel =
       redis === true ? "Redis: connected" :
+      redis === false && redisSet ? "Redis: bad REDIS_URL" :
       redis === false ? "Redis: offline" :
-      "Redis: n/a";
-    setPill(els.pillRedis, redisLabel, redis === true ? "ok" : redis === false ? "warn" : "");
-    const llm = data.checks?.llm || "mock";
-    const llmOk = llm === "openai" || llm === "mock";
-    setPill(els.pillModel, `LLM: ${llm}`, llmOk ? "ok" : "warn");
+      "Redis: not configured";
+    setPill(els.pillRedis, redisLabel, redis === true ? "ok" : redisSet ? "err" : "warn");
+    const useMock = data.checks?.use_mock_llm;
+    const openaiOk = data.checks?.openai_configured;
+    let llmLabel = data.checks?.llm || "mock";
+    if (useMock) llmLabel = "mock (USE_MOCK_LLM=true)";
+    else if (openaiOk) llmLabel = "openai ready";
+    else llmLabel = "mock (no valid OPENAI_API_KEY)";
+    setPill(els.pillModel, `LLM: ${llmLabel}`, useMock || !openaiOk ? "warn" : "ok");
   } catch {
     setPill(els.pillHealth, "Health: unreachable", "err");
   }

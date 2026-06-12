@@ -57,7 +57,13 @@ async def lifespan(app: FastAPI):
     }))
     init_redis()
     _is_ready = True
-    logger.info(json.dumps({"event": "ready", "redis": redis_available()}))
+    logger.info(json.dumps({
+        "event": "ready",
+        "redis": redis_available(),
+        "use_mock_llm": settings.use_mock_llm,
+        "openai_configured": settings.openai_configured,
+        "llm_provider": get_llm_provider(),
+    }))
 
     yield
 
@@ -234,8 +240,10 @@ def health():
         "total_requests": _request_count,
         "checks": {
             "llm": get_llm_provider(),
+            "use_mock_llm": settings.use_mock_llm,
             "openai_configured": settings.openai_configured,
             "redis": redis_ok if settings.redis_url else "not_configured",
+            "redis_url_set": bool(settings.redis_url),
         },
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
